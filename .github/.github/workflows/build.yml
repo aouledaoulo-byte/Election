@@ -1,1 +1,59 @@
+name: Build Flutter APK
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Create Flutter project
+        run: |
+          flutter create --org com.elections2026 --project-name elections2026djibouti tmp_app
+          
+      - name: Copy source files into project
+        run: |
+          rm -rf tmp_app/lib
+          cp -r lib tmp_app/lib
+          cp pubspec.yaml tmp_app/pubspec.yaml
+
+      - name: Get dependencies
+        working-directory: tmp_app
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: tmp_app
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: elections2026-release
+          path: tmp_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
