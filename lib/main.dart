@@ -7,10 +7,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: const String.fromEnvironment('SUPABASE_URL',
-        defaultValue: 'https://ktkjtcjmsuugogyejtwh.supabase.co'),
-    anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY',
-        defaultValue: ''),
+    url: 'https://ktkjtcjmsuugogyejtwh.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0a2p0Y2ptc3V1Z29neWVqdHdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTY3OTYsImV4cCI6MjA4ODY3Mjc5Nn0.Hu6cWispUu13a68lH8MzzAiVAePbZjqREPfFVfzed-8',
   );
 
   runApp(const ElectionsApp());
@@ -37,20 +35,13 @@ class ElectionsApp extends StatelessWidget {
           elevation: 2,
         ),
       ),
-      home: const AuthWrapper(),
+      initialRoute: Supabase.instance.client.auth.currentSession != null
+          ? '/dashboard'
+          : '/login',
+      routes: {
+        '/login': (_) => const LoginScreen(),
+        '/dashboard': (_) => const DashboardScreen(),
+      },
     );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session != null) {
-      return const DashboardScreen();
-    }
-    return const LoginScreen();
   }
 }
